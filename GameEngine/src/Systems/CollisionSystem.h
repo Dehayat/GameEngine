@@ -5,6 +5,8 @@
 #include "../Components/BoxColliderComponent.h"
 #include "../Logger/Logger.h"
 #include <string>
+#include "../EventBus/EventBus.h"
+#include "../Events/CollisionEvent.h"
 
 class CollisionSystem : public System {
 private:
@@ -21,7 +23,7 @@ public:
 		RequireComponent<TransformComponent>();
 		RequireComponent<BoxColliderComponent>();
 	}
-	void Update() {
+	void Update(std::unique_ptr<EventBus>& eventBus) {
 		auto entities = GetSystemEntities();
 		for (int i = 0; i < entities.size(); i++) {
 			auto& collider = entities[i].GetComponent<BoxColliderComponent>();
@@ -48,7 +50,10 @@ public:
 				if (CheckAABBCollision(aCollider, bCollider)) {
 					ABoxCollider.isColliding = true;
 					BBoxCollider.isColliding = true;
-					Logger::Log("Entity " + std::to_string(entities[i].GetId()) + " and " + "Entity " + std::to_string(entities[j].GetId()) + " Are colliding");
+					eventBus->EmitEvent<CollisionEvent>(entities[i], entities[j]);
+					//entities[i].Destroy();
+					//entities[j].Destroy();
+					//Logger::Log("Entity " + std::to_string(entities[i].GetId()) + " and " + "Entity " + std::to_string(entities[j].GetId()) + " Are colliding");
 				}
 			}
 		}

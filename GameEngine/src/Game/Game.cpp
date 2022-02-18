@@ -15,6 +15,8 @@
 #include "../Systems/AnimationSystem.h"
 #include "../Systems/CollisionSystem.h"
 #include "../Systems/RenderColliderSystem.h"
+#include "../Systems/DamageSystem.h"
+#include "../Systems/KeyboardMovementSystem.h"
 
 Game::Game()
 {
@@ -26,6 +28,7 @@ Game::Game()
 	windowHeight = 100;
 	registry = std::make_unique<Registry>();
 	assetStore = std::make_unique<AssetStore>();
+	eventBus = std::make_unique<EventBus>();
 }
 
 Game::~Game()
@@ -49,7 +52,9 @@ void Game::Init()
 			SDL_WINDOWPOS_CENTERED,
 			windowWidth,
 			windowHeight,
-			SDL_WINDOW_FULLSCREEN_DESKTOP
+			//SDL_WINDOW_FULLSCREEN_DESKTOP
+			//SDL_WINDOW_FULLSCREEN
+			SDL_WINDOW_BORDERLESS
 		);
 		if (window == nullptr)
 		{
@@ -130,6 +135,8 @@ void Game::LoadLevel(int level) {
 	registry->AddSystem<AnimationSystem>();
 	registry->AddSystem<CollisionSystem>();
 	registry->AddSystem<RenderColliderSystem>();
+	registry->AddSystem<DamageSystem>();
+	registry->AddSystem<KeyboardMovementSystem>();
 
 	assetStore->AddTexture(renderer, "TankImage", "./assets/images/tank-panther-right.png");
 	assetStore->AddTexture(renderer, "TruckImage", "./assets/images/truck-ford-right.png");
@@ -155,7 +162,7 @@ void Game::LoadLevel(int level) {
 	tank.AddComponent<TransformComponent>(glm::vec2(100, 20));
 	tank.AddComponent<RigidBodyComponent>(glm::vec2(10, 0));
 	tank.AddComponent<SpriteComponent>("TankImage", 32, 32, 2);
-	tank.AddComponent<BoxColliderComponent>(20, 18,glm::vec2(6,7));
+	tank.AddComponent<BoxColliderComponent>(20, 18, glm::vec2(6, 7));
 
 	Entity truck = registry->CreateEntity();
 	truck.AddComponent<TransformComponent>(glm::vec2(10, 20));
@@ -187,6 +194,9 @@ void Game::HandleInput()
 			{
 				isRunning = false;
 			}
+			else {
+				eventBus->EmitEvent<KeyPressedEvent>(sdlEvent.key.keysym.sym);
+			}
 			break;
 		}
 		default:
@@ -211,8 +221,13 @@ void Game::Update()
 	//playerPos.x += playerVel.x * deltaTime;
 	//playerPos.y += playerVel.y * deltaTime;
 
+	eventBus->Reset();
+
+	registry->GetSystem<DamageSystem>().ListenToEvents(eventBus);
+	registry->GetSystem<KeyboardMovementSystem>().ListenToEvents(eventBus);
+
 	registry->GetSystem<MovementSystem>().Update(deltaTime);
-	registry->GetSystem<CollisionSystem>().Update();
+	registry->GetSystem<CollisionSystem>().Update(eventBus);
 	registry->GetSystem<AnimationSystem>().Update(deltaTime);
 
 	registry->Update();

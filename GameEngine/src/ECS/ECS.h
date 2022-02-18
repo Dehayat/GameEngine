@@ -5,6 +5,7 @@
 #include <typeindex>
 #include <set>
 #include "../Logger/Logger.h"
+#include <deque>
 
 class Entity {
 private:
@@ -20,6 +21,8 @@ public:
 	template <typename T>bool HasComponent();
 	template <typename T>T& GetComponent();
 	template <typename T>void RemoveComponent();
+
+	void Destroy();
 
 	class Registry* registry;
 };
@@ -106,10 +109,12 @@ private:
 	std::unordered_map<std::type_index, std::shared_ptr<System>> Systems;
 	std::set<Entity> entitiesToBeAdded;
 	std::set<Entity> entitiesToBeRemoved;
+	std::deque<int> freeIds;
 
 public:
 	Registry() = default;
 	Entity CreateEntity();
+	void DestroyEntity(Entity entity);
 	void Update();
 	template<typename T, typename ...TArgs> void AddComponent(Entity entity, TArgs&& ...args);
 	template<typename T> void RemoveComponent(Entity entity);
@@ -122,6 +127,7 @@ public:
 	template<typename T> T& GetSystem() const;
 
 	void AddEntityToSystems(Entity entity);
+	void RemoveEntityFromSystems(Entity entity);
 };
 
 template<typename T>

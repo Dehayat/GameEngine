@@ -10,6 +10,7 @@
 #include "../Components/SpriteComponent.h"
 #include "../Components/AnimationComponent.h"
 #include "../Components/BoxColliderComponent.h"
+#include "../Components/KeyboardMovementComponent.h"
 #include "../Systems/MovementSystem.h"
 #include "../Systems/RenderSystem.h"
 #include "../Systems/AnimationSystem.h"
@@ -141,17 +142,18 @@ void Game::LoadLevel(int level) {
 	assetStore->AddTexture(renderer, "TankImage", "./assets/images/tank-panther-right.png");
 	assetStore->AddTexture(renderer, "TruckImage", "./assets/images/truck-ford-right.png");
 	assetStore->AddTexture(renderer, "JungleTiles", "./assets/tilemaps/jungle.png");
-	assetStore->AddTexture(renderer, "ChopperImage", "./assets/images/chopper.png");
+	assetStore->AddTexture(renderer, "ChopperImage", "./assets/images/chopper-spritesheet.png");
 	assetStore->AddTexture(renderer, "RadarImage", "./assets/images/radar.png");
 
 	LoadTileMap();
 
 
 	Entity chopper = registry->CreateEntity();
-	chopper.AddComponent<TransformComponent>(glm::vec2(10, 20));
-	chopper.AddComponent<RigidBodyComponent>(glm::vec2(20, 0));
+	chopper.AddComponent<TransformComponent>(glm::vec2(150, 150));
+	chopper.AddComponent<RigidBodyComponent>(glm::vec2(0, 0));
 	chopper.AddComponent<SpriteComponent>("ChopperImage", 32, 32, 3);
 	chopper.AddComponent<AnimationComponent>(2, 10, true);
+	chopper.AddComponent<KeyboardMovementComponent>(50.0f);
 
 	Entity radar = registry->CreateEntity();
 	radar.AddComponent<TransformComponent>(glm::vec2(300, 20));

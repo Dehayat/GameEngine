@@ -14,7 +14,7 @@ public:
 		RequireComponent<TransformComponent>();
 		RequireComponent<SpriteComponent>();
 	}
-	void Update(SDL_Renderer* renderer, std::unique_ptr<AssetStore>& assetStore) {
+	void Update(SDL_Renderer* renderer, std::unique_ptr<AssetStore>& assetStore, SDL_Rect& camera) {
 		std::vector<Entity> entities = GetSystemEntities();
 		std::sort(entities.begin(), entities.end(),
 			[](Entity& a, Entity& b) ->bool {
@@ -28,12 +28,17 @@ public:
 			const auto& transform = entity.GetComponent<TransformComponent>();
 			const auto& sprite = entity.GetComponent<SpriteComponent>();
 
+
 			SDL_Rect destRect{
-				transform.position.x,
-				transform.position.y,
+				transform.position.x - camera.x,
+				transform.position.y - camera.y,
 				sprite.width * transform.scale.x,
 				sprite.height * transform.scale.y
 			};
+			if (sprite.isFixed) {
+				destRect.x = transform.position.x;
+				destRect.y = transform.position.y;
+			}
 			SDL_RenderCopyEx(
 				renderer,
 				assetStore->GetTexture(sprite.assetId),

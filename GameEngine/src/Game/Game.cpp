@@ -11,6 +11,7 @@
 #include "../Components/AnimationComponent.h"
 #include "../Components/BoxColliderComponent.h"
 #include "../Components/KeyboardMovementComponent.h"
+#include "../Components/CameraFollowComponent.h"
 #include "../Systems/MovementSystem.h"
 #include "../Systems/RenderSystem.h"
 #include "../Systems/AnimationSystem.h"
@@ -18,6 +19,7 @@
 #include "../Systems/RenderColliderSystem.h"
 #include "../Systems/DamageSystem.h"
 #include "../Systems/KeyboardMovementSystem.h"
+#include "../Systems/CameraFollowSystem.h"
 
 Game::Game()
 {
@@ -25,11 +27,15 @@ Game::Game()
 	window = nullptr;
 	lastFrameStartInMilliseconds = 0;
 	isRunning = false;
-	windowWidth = 100;
-	windowHeight = 100;
+	windowWidth = 700;
+	windowHeight = 500;
 	registry = std::make_unique<Registry>();
 	assetStore = std::make_unique<AssetStore>();
 	eventBus = std::make_unique<EventBus>();
+	camera.x = 0;
+	camera.y = 0;
+	camera.w = windowWidth;
+	camera.h = windowHeight;
 }
 
 Game::~Game()
@@ -45,8 +51,8 @@ void Game::Init()
 	{
 		SDL_DisplayMode displayMode;
 		SDL_GetCurrentDisplayMode(0, &displayMode);
-		windowWidth = displayMode.w;
-		windowHeight = displayMode.h;
+		//windowWidth = 700;// displayMode.w;
+		//windowHeight = 500;// displayMode.h;
 		window = SDL_CreateWindow(
 			"Game Engine",
 			SDL_WINDOWPOS_CENTERED,
@@ -138,6 +144,7 @@ void Game::LoadLevel(int level) {
 	registry->AddSystem<RenderColliderSystem>();
 	registry->AddSystem<DamageSystem>();
 	registry->AddSystem<KeyboardMovementSystem>();
+	registry->AddSystem<CameraFollowSystem>();
 
 	assetStore->AddTexture(renderer, "TankImage", "./assets/images/tank-panther-right.png");
 	assetStore->AddTexture(renderer, "TruckImage", "./assets/images/truck-ford-right.png");
@@ -154,11 +161,13 @@ void Game::LoadLevel(int level) {
 	chopper.AddComponent<SpriteComponent>("ChopperImage", 32, 32, 3);
 	chopper.AddComponent<AnimationComponent>(2, 10, true);
 	chopper.AddComponent<KeyboardMovementComponent>(50.0f);
+	chopper.AddComponent<CameraFollowComponent>();
 
 	Entity radar = registry->CreateEntity();
-	radar.AddComponent<TransformComponent>(glm::vec2(300, 20));
+	radar.AddComponent<TransformComponent>(glm::vec2(600, 20));
 	radar.AddComponent<SpriteComponent>("RadarImage", 64, 64, 4);
-	radar.AddComponent<AnimationComponent>(8, 4, true);
+	radar.GetComponent<SpriteComponent>().isFixed = true;
+	radar.AddComponent<AnimationComponent>(8, 8, true);
 
 	Entity tank = registry->CreateEntity();
 	tank.AddComponent<TransformComponent>(glm::vec2(100, 20));
@@ -231,6 +240,7 @@ void Game::Update()
 	registry->GetSystem<MovementSystem>().Update(deltaTime);
 	registry->GetSystem<CollisionSystem>().Update(eventBus);
 	registry->GetSystem<AnimationSystem>().Update(deltaTime);
+	registry->GetSystem<CameraFollowSystem>().Update(camera);
 
 	registry->Update();
 }
@@ -240,8 +250,8 @@ void Game::Render()
 	SDL_SetRenderDrawColor(renderer, 100, 0, 0, 255);
 	SDL_RenderClear(renderer);
 
-	registry->GetSystem<RenderSystem>().Update(renderer, assetStore);
-	registry->GetSystem<RenderColliderSystem>().Update(renderer);
+	registry->GetSystem<RenderSystem>().Update(renderer, assetStore, camera);
+	registry->GetSystem<RenderColliderSystem>().Update(renderer, camera);
 
 
 	//SDL_Surface* surface = IMG_Load("./assets/images/tank-tiger-down.png");

@@ -13,7 +13,7 @@ public:
 		RequireComponent<TransformComponent>();
 		RequireComponent<BoxColliderComponent>();
 	}
-	void Update(SDL_Renderer* renderer) {
+	void Update(SDL_Renderer* renderer, SDL_Rect& camera) {
 		std::vector<Entity> entities = GetSystemEntities();
 
 		for (auto entity : entities) {
@@ -21,10 +21,10 @@ public:
 			const auto& collider = entity.GetComponent<BoxColliderComponent>();
 
 			SDL_Rect destRect{
-				transform.position.x + collider.offset.x,
-				transform.position.y + collider.offset.y,
-				collider.width,
-				collider.height
+				transform.position.x + collider.offset.x - camera.x,
+				transform.position.y + collider.offset.y - camera.y,
+				collider.width * transform.scale.x,
+				collider.height * transform.scale.y
 			};
 			if (collider.isColliding) {
 				SDL_SetRenderDrawColor(renderer, 200, 0, 0, SDL_ALPHA_OPAQUE);
